@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BarrySwap</title>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-900 text-white font-sans">
+  <div class="max-w-xl mx-auto py-12 px-6">
+    <div class="flex justify-between items-center mb-8">
+      <h1 class="text-3xl font-bold flex items-center">
+        <span class="text-blue-400 mr-2">🐻</span> BarrySwap
+      </h1>
+      <button id="connectBtn" class="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">Connect Wallet</button>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- Swap Section -->
+      <div class="bg-gray-800 p-6 rounded-lg shadow">
+        <h2 class="text-xl font-semibold mb-4">Swap</h2>
+        <div class="mb-4">
+          <label class="block mb-1">From</label>
+          <div class="flex">
+            <input id="swapAmount" type="number" placeholder="0" class="w-full px-3 py-2 rounded-l bg-gray-700 border-none" />
+            <span class="bg-gray-700 px-4 py-2 rounded-r border-l border-gray-600">BARRY</span>
+          </div>
+        </div>
+        <button onclick="swap()" class="w-full bg-blue-600 py-2 rounded hover:bg-blue-500">Swap to BASE</button>
+        <p class="text-xs text-gray-400 mt-2">1 BARRY = 0.008 BASE</p>
+      </div>
+
+      <!-- Stake Section -->
+      <div class="bg-gray-800 p-6 rounded-lg shadow">
+        <h2 class="text-xl font-semibold mb-4">Stake</h2>
+        <div class="mb-4">
+          <label class="block mb-1">Amount</label>
+          <input id="stakeAmount" type="number" placeholder="Enter BARRY amount" class="w-full px-3 py-2 rounded bg-gray-700 border-none" />
+        </div>
+        <div class="flex gap-2">
+          <button onclick="stake()" class="bg-green-600 px-4 py-2 rounded hover:bg-green-500">Stake</button>
+          <button onclick="claimReward()" class="bg-yellow-600 px-4 py-2 rounded hover:bg-yellow-500">Claim Reward</button>
+          <button onclick="withdraw()" class="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600">Withdraw</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats Section -->
+    <div class="mt-8 text-center">
+      <h3 class="text-sm text-gray-400">Transaction History</h3>
+      <p class="text-gray-500 text-sm">Check your wallet for TX status</p>
+    </div>
+  </div>
+
+  <script>
+    const stakingContractAddress = "0xYourContractAddressHere"; // Replace with deployed contract
+    const tokenOutAddress = "0xAnotherTokenAddressHere"; // Replace with BASE or other token address
+
+    const abi = [
+      "function stake(uint256 amount) external",
+      "function withdraw(uint256 amount) external",
+      "function claimReward() external",
+      "function swap(uint256 amountIn, address tokenOut) external",
+      "function getSwapRate(uint256 amountIn) public view returns (uint256)"
+    ];
+
+    let signer;
+    let contract;
+
+    document.getElementById("connectBtn").addEventListener("click", async () => {
+      if (window.ethereum) {
+        await ethereum.request({ method: "eth_requestAccounts" });
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        signer = provider.getSigner();
+        contract = new ethers.Contract(stakingContractAddress, abi, signer);
+        alert("Wallet connected!");
+      } else {
+        alert("Please install MetaMask.");
+      }
+    });
+
+    async function stake() {
+      const amount = document.getElementById("stakeAmount").value;
+      const tx = await contract.stake(ethers.utils.parseUnits(amount, 18));
+      await tx.wait();
+      alert("Staked successfully!");
+    }
+
+    async function withdraw() {
+      const amount = document.getElementById("stakeAmount").value;
+      const tx = await contract.withdraw(ethers.utils.parseUnits(amount, 18));
+      await tx.wait();
+      alert("Withdrawn successfully!");
+    }
+
+    async function claimReward() {
+      const tx = await contract.claimReward();
+      await tx.wait();
+      alert("Reward claimed!");
+    }
+
+    async function swap() {
+      const amount = document.getElementById("swapAmount").value;
+      const tx = await contract.swap(ethers.utils.parseUnits(amount, 18), tokenOutAddress);
+      await tx.wait();
+      alert("Swapped successfully!");
+    }
+  </script>
+</body>
+</html>
